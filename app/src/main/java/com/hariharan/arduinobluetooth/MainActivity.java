@@ -19,7 +19,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public class MainActivity extends Activity {
-//    private final String DEVICE_NAME="H-C-2010-06-01";
+//    private final String DEVICE_NAME="H-C-2010-06-01(3366)";
     private final String DEVICE_ADDRESS="20:13:10:15:33:66";
     private final UUID PORT_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");//Serial Port Service ID
     private BluetoothDevice device;
@@ -52,7 +52,6 @@ public class MainActivity extends Activity {
     {
         startButton.setEnabled(!bool);
         sendButton.setEnabled(bool);
-        clearButton.setEnabled(bool);
         stopButton.setEnabled(bool);
         textView.setEnabled(bool);
 
@@ -132,6 +131,7 @@ public class MainActivity extends Activity {
                 setUiEnabled(true);
                 deviceConnected=true;
                 beginListenForData();
+                textView.append("\nConnection Opened!\n");
             }
 
         }
@@ -140,10 +140,7 @@ public class MainActivity extends Activity {
     void beginListenForData()
     {
         final Handler handler = new Handler();
-        final byte delimiter = 10; //ASCII code for /n (newline)
-
         stopThread = false;
-        bufferPosition = 0;
         buffer = new byte[1024];
         Thread thread  = new Thread(new Runnable()
         {
@@ -158,27 +155,14 @@ public class MainActivity extends Activity {
                         {
                             byte[] rawBytes = new byte[byteCount];
                             inputStream.read(rawBytes);
-                            for(int i=0;i<byteCount;i++)
-                            {
-                                byte b = rawBytes[i];
-                                if(b == delimiter)
-                                {
-                                    byte[] encodedBytes = new byte[bufferPosition];
-                                    System.arraycopy(buffer, 0, encodedBytes, 0, encodedBytes.length);
-                                    final String data = new String(encodedBytes, "UTF-8");
-                                    bufferPosition = 0;
-                                    handler.post(new Runnable() {
+                           final String string=new String(rawBytes,"UTF-8");
+                            handler.post(new Runnable() {
                                         public void run()
                                         {
-                                            textView.append(data);
+                                            textView.append(string);
                                         }
                                     });
-                                }
-                                else
-                                {
-                                    buffer[bufferPosition++] = b;
-                                }
-                            }
+
                         }
                     }
                     catch (IOException ex)
@@ -200,6 +184,7 @@ public class MainActivity extends Activity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        textView.append("\nSent Data:"+string+"\n");
 
     }
 
@@ -210,6 +195,7 @@ public class MainActivity extends Activity {
         socket.close();
         setUiEnabled(false);
         deviceConnected=false;
+        textView.append("\nConnection Closed!\n");
     }
 
     public void onClickClear(View view) {
